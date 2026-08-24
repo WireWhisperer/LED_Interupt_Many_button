@@ -1,0 +1,26 @@
+# 验证 no_zero 修复: 无键时 p1-p4 应保持0(不再Err), TRISC 正常右移
+set device PIC16F18854
+set osc none
+set simulator "sim"
+set voltage 3.3
+device PIC16F18854
+hwtool sim
+Program "D:/PIC/Project/LED_Interupt/dist/default/production/LED_Interupt.production.hex"
+Stepi 300
+print /x TRISC
+echo === after 2000 steps (no key) ===
+Stepi 2000
+print /x 0x71
+print /x 0x72
+print /x 0x73
+print /x 0x74
+print /x TRISC
+echo === after 50000 steps (no key) ===
+Stepi 50000
+print /x 0x71
+print /x 0x72
+print /x 0x73
+print /x 0x74
+print /x TRISC
+print /x LATA
+quit

@@ -23610,15 +23610,21 @@ mask_done:
 
     no_zero:
     ;--- 无按键：TRISC/WPUC 逻辑右移切到下一列，i-1 ---
-    ; i != 0 → 继续扫下一列(scan_start)
-    ; i == 0 → 4 列扫完无按键 → 回到 cal_0_num
+    ; i != 0 → 重新读 PORTC 再统计下一列(不能沿用 W 残留值!)
+    ; i == 0 → 4 列扫完无按键 → 返回
     banksel TRISC
     lsrf TRISC, F ;TRISC 逻辑右移(扫描列切换)
     banksel WPUC
     lsrf WPUC, F ;WPUC 逻辑右移(跟上 TRISC)
     decfsz i, F ;i = i-1；结果为 0 时跳过下一条
-    goto cal_0_num ;i != 0 → 继续扫描下一列
+    goto scan_next ;i != 0 → 重新读 PORTC
     return ;i == 0 → 扫完所有列，返回
+scan_next:
+    ;右移后必须重新读 PORTC(此时 W 是统计残留值, 不能当 v 用)
+    BANKSEL PORTC
+    movf PORTC, W
+    ANDLW 0x0F
+    goto cal_0_num ;重新统计下一列
 
     to_many_zero:
     ;--- 多个按键同时按下 → 4 位显示 "Err"(末位熄灭) 并返回 ---
@@ -23662,8 +23668,15 @@ KEY_DOUBLE_ACTIVE EQU 5
     BANKSEL PORTC
     movf PORTC, W
     andlw 0x0F
-    xorlw 0x0F ;全1(无按下)→W=0,Z=1
-    movwf charcase ;charcase=按下掩码(0=无按下)
+    movwf charcase ;charcase = v(PORTC 低4位)
+    ;按当前 i 只保留扫描层有效位(低 i 位), 忽略被 TRISC 右移成输出的高位
+    ; 有效位全1(无按下)→差值为0,Z=1; 有0(按下)→差值非0,Z=0
+    call key_mask ;W = mask
+    movwf cur_bit ;cur_bit = mask
+    movf charcase, W
+    andwf cur_bit, W ;W = v & mask (有效位)
+    subwf cur_bit, W ;W = mask - (v&mask)
+    movwf charcase ;charcase = 差值(各状态用它判断按下/松开)
 
     ;按低3位状态分支
     movf key_state, W
@@ -23837,6 +23850,17 @@ KEY_DOUBLE_ACTIVE EQU 5
     movlw 10 ;'A'
     movwf p4
     return
+
+;--- 按 i(1~4) 返回扫描层掩码 mask=(1<<i)-1 ---
+; 输出: W = mask
+key_mask:
+    movf i, W
+    addlw -1 ;i-1 (0~3)
+    BRW
+    retlw 0x01 ;i=1 → 0b0001
+    retlw 0x03 ;i=2 → 0b0011
+    retlw 0x07 ;i=3 → 0b0111
+    retlw 0x0F ;i=4 → 0b1111
 
 ;--- 计算当前按键号(1~10)：根据 i 和 key_data(按下位=0) ---
 ; i=4: C3→10 C2→9 C1→8 C0→7
