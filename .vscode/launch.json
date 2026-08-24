@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // 注意：此处的属性可能会覆盖 MPLAB 项目设置
+      "name": "MPLAB 模拟器调试 (PIC16F18854)",
+      "type": "mplab-core-da",
+      "request": "launch",
+      "program": "${workspaceFolder}/dist/default/debug/LED_Interupt.debug.elf",
+      "device": "PIC16F18854",
+      "tool": "Simulator",
+      "mprocessor": "PIC16F18854",
+      "mdfpPath": "D:/PIC/MPLABX/v6.35/packs/Microchip/PIC16F1xxxx_DFP/1.31.465",
+      "stopOnEntry": true,
+      "preLaunchTask": "Build debug ELF (编译调试固件)"
+    }
+  ]
+}

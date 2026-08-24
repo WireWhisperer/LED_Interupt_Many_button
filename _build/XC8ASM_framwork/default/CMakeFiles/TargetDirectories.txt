@@ -1,0 +1,4 @@
+D:/PIC/Project/LED_Interupt/_build/XC8ASM_framwork/default/CMakeFiles/XC8ASM_framwork_default_default_XC8_assemble.dir
+D:/PIC/Project/LED_Interupt/_build/XC8ASM_framwork/default/CMakeFiles/XC8ASM_framwork_default_image_VVG9z39a.dir
+D:/PIC/Project/LED_Interupt/_build/XC8ASM_framwork/default/CMakeFiles/edit_cache.dir
+D:/PIC/Project/LED_Interupt/_build/XC8ASM_framwork/default/CMakeFiles/rebuild_cache.dir

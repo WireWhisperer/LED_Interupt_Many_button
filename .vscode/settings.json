@@ -1,0 +1,34 @@
+{
+    "mplab.clangd.compileCommandsDir": "${workspaceFolder}\\_build\\XC8ASM_framwork\\default",
+    "VsCodeTaskButtons.showCounter": false,
+    "VsCodeTaskButtons.tasks": [
+        {
+            "label": "$(tools) 配置XC8",
+            "task": "XC8: 一键配置编译器环境",
+            "tooltip": "一键配置 XC8 编译器环境（自动探测并修正编译器路径）",
+            "alignment": "left",
+            "color": "default"
+        },
+        {
+            "label": "$(gear) 编译HEX",
+            "task": "Build hex (编译生成HEX)",
+            "tooltip": "一键编译 helloworld.s 并生成 HEX 固件",
+            "alignment": "left",
+            "color": "default"
+        },
+        {
+            "label": "$(debug-start) 仿真",
+            "task": "Simulate (仿真)",
+            "tooltip": "使用 MPLAB X 模拟器仿真运行并打印寄存器状态",
+            "alignment": "left",
+            "color": "warning"
+        },
+        {
+            "label": "$(flame) 烧录",
+            "task": "Flash (烧录)",
+            "tooltip": "烧录 HEX 到芯片（未编译则先编译，通过串口 Bootloader 烧录）",
+            "alignment": "left",
+            "color": "error"
+        }
+    ]
+}

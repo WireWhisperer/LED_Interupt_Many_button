@@ -1,0 +1,30 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build hex (XC8 v3.10)",
+            "type": "shell",
+            "command": "& \"D:\\PIC\\MPLABX\\v6.35\\gnuBins\\GnuWin32\\bin\\make.exe\" -f nbproject/Makefile-default.mk build CONF=default TYPE_IMAGE=production",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "detail": "使用 XC8 v3.10 编译 helloworld.s 并生成 HEX 固件"
+        },
+        {
+            "label": "Clean build",
+            "type": "shell",
+            "command": "& \"D:\\PIC\\MPLABX\\v6.35\\gnuBins\\GnuWin32\\bin\\make.exe\" -f nbproject/Makefile-default.mk clean CONF=default; if ($LASTEXITCODE -eq 0) { & \"D:\\PIC\\MPLABX\\v6.35\\gnuBins\\GnuWin32\\bin\\make.exe\" -f nbproject/Makefile-default.mk build CONF=default TYPE_IMAGE=production }",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "先清理再编译，生成全新 HEX"
+        }
+    ]
+}
