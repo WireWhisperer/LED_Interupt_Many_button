@@ -110,6 +110,10 @@ intentry:
     movwf   TMR0H
     movlw   TMR0_RELOAD_L   ;重装值低8位(汇编器自动算出)
     movwf   TMR0L
+
+    ;--- 按键扫描 + 状态机：每次 TMR0 中断调用一次(约5ms 采样一次) ---
+    ;    识别 10 个按键的单击/双击/长按；同时按下两个键 → 显示 "Err"
+    call    button_scan
     
     ;========根据位选变量值跳转到相应显示过程=========
 
@@ -282,10 +286,10 @@ _main:
     
 
     ;===============主循环================
+    ;按键扫描+状态机已移入 TMR0 中断(每次中断采样一次)
     main_loop:
-        call button_scan    ;按键扫描 + 状态机(单击/双击/长按)
     
-    goto main_loop  ;8us 循环扫描
+    goto main_loop  ;空循环
     
 
 ;--- 软件分频器：sys_tick 第8位 0→1 上升沿检测 → 触发 tick8_handler ---
@@ -571,17 +575,97 @@ KEY_DOUBLE_ACTIVE EQU 5
     CLRF    key_cnt
     return
 
-    ;--- 单击事件处理(在此填写动作) ---
+    ;--- 单击事件处理：1、2位=按键号, 3、4位=DJ(单击) ---
     click_event:
-    ;例如: movf key_data,W ; movwf p1
+    call    key_number       ;W = 按键号(1~10)
+    call    disp_key_num     ;p1=十位(0全灭), p2=个位
+    movlw   13              ;'D'
+    movwf   p3
+    movlw   19              ;'J'
+    movwf   p4
     return
 
-    ;--- 双击事件处理(在此填写动作) ---
+    ;--- 双击事件处理：1、2位=按键号, 3、4位=SJ(双击) ---
     double_event:
+    call    key_number
+    call    disp_key_num
+    movlw   28              ;'S'
+    movwf   p3
+    movlw   19              ;'J'
+    movwf   p4
     return
 
-    ;--- 长按事件处理(在此填写动作) ---
+    ;--- 长按事件处理：1、2位=按键号, 3、4位=CA(长按) ---
     long_event:
+    call    key_number
+    call    disp_key_num
+    movlw   12              ;'C'
+    movwf   p3
+    movlw   10              ;'A'
+    movwf   p4
+    return
+
+;--- 计算当前按键号(1~10)：根据 i 和 key_data(按下位=0) ---
+;    i=4: C3→10 C2→9 C1→8 C0→7
+;    i=3: C2→6  C1→5  C0→4
+;    i=2: C1→3  C0→2
+;    i=1: C0→1
+;    输入: i(1~4), key_data; 输出: W=按键号
+key_number:
+    movf    i, W
+    addlw   -1              ;i-1 (0~3)
+    BRW
+    goto    key_i4
+    goto    key_i3
+    goto    key_i2
+    goto    key_i1
+key_i4:
+    btfss   key_data, 3
+    retlw   10
+    btfss   key_data, 2
+    retlw   9
+    btfss   key_data, 1
+    retlw   8
+    btfss   key_data, 0
+    retlw   7
+    retlw   0               ;无匹配(不应发生)
+key_i3:
+    btfss   key_data, 2
+    retlw   6
+    btfss   key_data, 1
+    retlw   5
+    btfss   key_data, 0
+    retlw   4
+    retlw   0
+key_i2:
+    btfss   key_data, 1
+    retlw   3
+    btfss   key_data, 0
+    retlw   2
+    retlw   0
+key_i1:
+    btfss   key_data, 0
+    retlw   1
+    retlw   0
+
+;--- 显示按键号(1~10)到数码管1、2位 ---
+;    输入: W=按键号; p1=十位(为0时全灭36), p2=个位
+disp_key_num:
+    movwf   charcase        ;charcase = 按键号
+    movlw   10
+    subwf   charcase, W     ;W = 10 - n
+    btfsc   STATUS, STATUS_Z_POSN  ;n==10
+    goto    num_is_10
+    movlw   36              ;n<10 → 十位全灭
+    movwf   p1
+    movf    charcase, W
+    movwf   p2              ;个位 = n
+    return
+num_is_10:
+    movlw   1
+    movwf   p1              ;十位 = 1
+    movlw   0
+    movwf   p2              ;个位 = 0
     return
 
 ;--- 实时显示 PORTC 低 4 位电平(0/1)到 4 位数码管 ---
