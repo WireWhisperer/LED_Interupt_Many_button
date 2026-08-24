@@ -23573,15 +23573,27 @@ button_scan:
     ; 否则 → 多个零
     cal_0_num:
     ;--- 1) 保存 v，并按 i 查表得到掩码 mask=(1<<i)-1 ---
+    ; 注意：不能用 retlw(它会 RETURN 提前退出本函数)，改为跳转+汇合
     movwf charcase ;charcase = v(PORTC 低 4 位)
     movf i, W ;i 须在 1~4
     addlw -1 ;W = i-1 (0~3)
     BRW
-    retlw 0x01 ;i=1 → 掩码 0b0001
-    retlw 0x03 ;i=2 → 掩码 0b0011
-    retlw 0x07 ;i=3 → 掩码 0b0111
-    retlw 0x0F ;i=4 → 掩码 0b1111
-
+    goto mask_i1
+    goto mask_i2
+    goto mask_i3
+    goto mask_i4
+mask_i1:
+    movlw 0x01 ;i=1 → 掩码 0b0001
+    goto mask_done
+mask_i2:
+    movlw 0x03 ;i=2 → 掩码 0b0011
+    goto mask_done
+mask_i3:
+    movlw 0x07 ;i=3 → 掩码 0b0111
+    goto mask_done
+mask_i4:
+    movlw 0x0F ;i=4 → 掩码 0b1111
+mask_done:
     ;--- 2) nz = mask ^ v ---
     xorwf charcase, W ;W = mask ^ v = nz
 

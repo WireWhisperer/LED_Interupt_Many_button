@@ -1,0 +1,30 @@
+# 修复验证：TRISC 应被 no_zero 右移(扫描在跑), FLAG/key_state 正常
+set device PIC16F18854
+set osc none
+set simulator "sim"
+set voltage 3.3
+device PIC16F18854
+hwtool sim
+Program "D:/PIC/Project/LED_Interupt/dist/default/production/LED_Interupt.production.hex"
+Stepi 300
+echo === after init ===
+print /x TRISC
+echo === after 2000 steps ===
+Stepi 2000
+print /x TRISC
+print /x 0x7a
+print /x 0x7e
+echo === after 20000 steps ===
+Stepi 20000
+print /x TRISC
+print /x 0x7a
+print /x 0x7e
+print /x LATA
+echo === simulate key via set RC0 = 0 (try) ===
+set RC0 = 0
+print /x PORTC
+Stepi 2000
+print /x PORTC
+print /x 0x7a
+print /x 0x7e
+quit

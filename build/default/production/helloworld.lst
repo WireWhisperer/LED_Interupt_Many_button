@@ -1,7 +1,7 @@
 
 
 Microchip MPLAB XC8 Assembler V4.00 build 20260614213421 
-                                                                                                           Mon Aug 24 22:16:23 2026
+                                                                                                           Mon Aug 24 22:34:22 2026
 
 
      1                           	processor	16F18854
@@ -21483,7 +21483,7 @@ Microchip MPLAB XC8 Assembler V4.00 build 20260614213421
  21477                           ;这里是0
  21478                           ;======= 第 1 位显示刷新 =======
  21479     0021  0871               	movf	p1,w
- 21480     0022  218D               	call	seg_table	;值(0~35) → 段码
+ 21480     0022  2194               	call	seg_table	;值(0~35) → 段码
  21481     0023  0020               	banksel	23
  21482     0024  1597               	bsf	23,3	;关闭第 3 位(上一个)
  21483     0025  1017               	bcf	23,0	;选中第 1 位(位选)
@@ -21494,7 +21494,7 @@ Microchip MPLAB XC8 Assembler V4.00 build 20260614213421
  21488                           ;======= 第 2 位显示刷新 =======
  21489                           
  21490     0029  0872               	movf	p2,w
- 21491     002A  218D               	call	seg_table	;值(0~35) → 段码
+ 21491     002A  2194               	call	seg_table	;值(0~35) → 段码
  21492     002B  0020               	banksel	23
  21493     002C  1417               	bsf	23,0	;关闭第 3 位(上一个)
  21494     002D  1097               	bcf	23,1	;选中第 1 位(位选)
@@ -21505,7 +21505,7 @@ Microchip MPLAB XC8 Assembler V4.00 build 20260614213421
  21499                           ;======= 第 3 位显示刷新 =======
  21500                           
  21501     0031  0873               	movf	p3,w
- 21502     0032  218D               	call	seg_table	;值(0~35) → 段码
+ 21502     0032  2194               	call	seg_table	;值(0~35) → 段码
  21503     0033  0020               	banksel	23
  21504     0034  1497               	bsf	23,1	;关闭第 3 位(上一个)
  21505     0035  1117               	bcf	23,2	;选中第 1 位(位选)
@@ -21516,7 +21516,7 @@ Microchip MPLAB XC8 Assembler V4.00 build 20260614213421
  21510                           ;======= 第 4 位显示刷新 =======
  21511                           
  21512     0039  0874               	movf	p4,w
- 21513     003A  218D               	call	seg_table	;值(0~35) → 段码
+ 21513     003A  2194               	call	seg_table	;值(0~35) → 段码
  21514     003B  0020               	banksel	23
  21515     003C  1517               	bsf	23,2	;关闭第 3 位(上一个)
  21516     003D  1197               	bcf	23,3	;选中第 1 位(位选)
@@ -21724,7 +21724,7 @@ Microchip MPLAB XC8 Assembler V4.00 build 20260614213421
  21718     0091  0008               	return
  21719     0092                     button_scan:
  21720     0092  187A               	btfsc	FLAG,0	;有没有找到按键(FLAG bit0)
- 21721     0093  28C7               	goto	State_machine
+ 21721     0093  28CE               	goto	State_machine
  21722     0094  3004               	movlw	4
  21723     0095  00FB               	movwf	i
  21724     0096  003E               	banksel	3919
@@ -21750,441 +21750,456 @@ Microchip MPLAB XC8 Assembler V4.00 build 20260614213421
  21744                           
  21745                           
  21746                           ;--- 1) 保存 v，并按 i 查表得到掩码 mask=(1<<i)-1 ---
- 21747     009E  00F0               	movwf	charcase	;charcase = v(PORTC 低 4 位)
- 21748     009F  087B               	movf	i,w	;i 须在 1~4
- 21749     00A0  3EFF               	addlw	-1	;W = i-1 (0~3)
- 21750     00A1  000B               	brw
- 21751     00A2  3401               	retlw	1	;i=1 → 掩码 0b0001
- 21752     00A3  3403               	retlw	3	;i=2 → 掩码 0b0011
- 21753     00A4  3407               	retlw	7	;i=3 → 掩码 0b0111
- 21754     00A5  340F               	retlw	15	;i=4 → 掩码 0b1111
- 21755                           
- 21756                           ;--- 2) nz = mask ^ v ---
- 21757     00A6  0670               	xorwf	charcase,w	;W = mask ^ v = nz
- 21758                           
- 21759                           ;--- 3) 按 nz 中 1 的个数分支 ---
- 21760     00A7  00F0               	movwf	charcase	;charcase = nz
- 21761     00A8  0870               	movf	charcase,w
- 21762     00A9  1903               	btfsc	3,2	;nz==0 → 无零(低 i 位全 1)
- 21763     00AA  28B0               	goto	no_zero
- 21764     00AB  0370               	decf	charcase,w	;W = nz-1
- 21765     00AC  0570               	andwf	charcase,w	;W = nz & (nz-1)
- 21766     00AD  1903               	btfsc	3,2	;Z=1 → nz 为 2 的幂(恰好 1 位) → 一个零
- 21767     00AE  28C0               	goto	one_zero
- 21768     00AF  28B7               	goto	to_many_zero	;否则 → 多个零
- 21769     00B0                     no_zero:
- 21770                           
- 21771                           ;--- 无按键：TRISC/WPUC 逻辑右移切到下一列，i-1 ---
- 21772                           ; i != 0 → 继续扫下一列(scan_start)
- 21773                           ; i == 0 → 4 列扫完无按键 → 回到 cal_0_num
- 21774     00B0  0020               	banksel	19
- 21775     00B1  3693               	lsrf	19,f	;TRISC 逻辑右移(扫描列切换)
- 21776     00B2  003E               	banksel	3919
- 21777     00B3  36CF               	lsrf	3919,f	;WPUC 逻辑右移(跟上 TRISC)
- 21778     00B4  0BFB               	decfsz	i,f	;i = i-1；结果为 0 时跳过下一条
- 21779     00B5  289E               	goto	cal_0_num	;i != 0 → 继续扫描下一列
- 21780     00B6  0008               	return	;i == 0 → 扫完所有列，返回
- 21781     00B7                     to_many_zero:
- 21782                           
- 21783                           ;--- 多个按键同时按下 → 4 位显示 "Err"(末位熄灭) 并返回 ---
- 21784     00B7  300E               	movlw	14	;索引 14 = 'E'
- 21785     00B8  00F1               	movwf	p1
- 21786     00B9  301B               	movlw	27	;索引 27 = 'R'(表内无小写 r，用 R 近似)
- 21787     00BA  00F2               	movwf	p2
- 21788     00BB  301B               	movlw	27	;索引 27 = 'R'
- 21789     00BC  00F3               	movwf	p3
- 21790     00BD  3024               	movlw	36	;索引 36 = 全灭(第 4 位熄灭)
- 21791     00BE  00F4               	movwf	p4
- 21792     00BF  0008               	return
- 21793     00C0                     one_zero:
- 21794                           
- 21795                           ;--- 单键按下：保存本次 PORTC 数据，标记已找到按键 ---
- 21796     00C0  0020               	banksel	14
- 21797     00C1  080E               	movf	14,w	;重新读 PORTC(此时 charcase 已被覆盖为 nz)
- 21798     00C2  390F               	andlw	15
- 21799     00C3  00FC               	movwf	key_data	;保存按下时的 PORTC 低 4 位
- 21800     00C4  01FD               	clrf	key_cnt	;按下次数清零(从按下时刻开始计数)
- 21801     00C5  147A               	bsf	FLAG,0	;置位 FLAG → 之后每次进 button_scan 直接进 State_machine
- 21802     00C6  0008               	return
- 21803                           
- 21804                           ;--- 按键状态机常量：key_state 的 01 组合区分状态 ---
- 21805                           ; bit0-2 = 状态(0~5, 共6个节点), bit7=1 → 消抖为二次(双击)模式
- 21806                           ; KEY_DEBOUNCE 被复用两次(首次→DOWN, 二次→DOUBLE_ACTIVE)
- 21807     0000                     KEY_IDLE        equ	0
- 21808     0001                     KEY_DEBOUNCE    equ	1
- 21809     0002                     KEY_DOWN        equ	2
- 21810     0003                     KEY_LONG_ACTIVE equ	3
- 21811     0004                     KEY_WAIT_DOUBLE equ	4
- 21812     0005                     KEY_DOUBLE_ACTIVE equ	5
- 21813     00C7                     State_machine:	
- 21814                           ;--- 按键状态机：单击/双击/长按 ---
- 21815                           ; 入口：button_scan 扫描到单个按键后置 FLAG，之后每次进 button_scan 直接跳这�
+ 21747                           ; 注意：不能用 retlw(它会 RETURN 提前退出本函数)，改为跳转+汇合
+ 21748     009E  00F0               	movwf	charcase	;charcase = v(PORTC 低 4 位)
+ 21749     009F  087B               	movf	i,w	;i 须在 1~4
+ 21750     00A0  3EFF               	addlw	-1	;W = i-1 (0~3)
+ 21751     00A1  000B               	brw
+ 21752     00A2  28A6               	goto	mask_i1
+ 21753     00A3  28A8               	goto	mask_i2
+ 21754     00A4  28AA               	goto	mask_i3
+ 21755     00A5  28AC               	goto	mask_i4
+ 21756     00A6                     mask_i1:
+ 21757     00A6  3001               	movlw	1	;i=1 → 掩码 0b0001
+ 21758     00A7  28AD               	goto	mask_done
+ 21759     00A8                     mask_i2:
+ 21760     00A8  3003               	movlw	3	;i=2 → 掩码 0b0011
+ 21761     00A9  28AD               	goto	mask_done
+ 21762     00AA                     mask_i3:
+ 21763     00AA  3007               	movlw	7	;i=3 → 掩码 0b0111
+ 21764     00AB  28AD               	goto	mask_done
+ 21765     00AC                     mask_i4:
+ 21766     00AC  300F               	movlw	15	;i=4 → 掩码 0b1111
+ 21767     00AD                     mask_done:
+ 21768                           
+ 21769                           ;--- 2) nz = mask ^ v ---
+ 21770     00AD  0670               	xorwf	charcase,w	;W = mask ^ v = nz
+ 21771                           
+ 21772                           ;--- 3) 按 nz 中 1 的个数分支 ---
+ 21773     00AE  00F0               	movwf	charcase	;charcase = nz
+ 21774     00AF  0870               	movf	charcase,w
+ 21775     00B0  1903               	btfsc	3,2	;nz==0 → 无零(低 i 位全 1)
+ 21776     00B1  28B7               	goto	no_zero
+ 21777     00B2  0370               	decf	charcase,w	;W = nz-1
+ 21778     00B3  0570               	andwf	charcase,w	;W = nz & (nz-1)
+ 21779     00B4  1903               	btfsc	3,2	;Z=1 → nz 为 2 的幂(恰好 1 位) → 一个零
+ 21780     00B5  28C7               	goto	one_zero
+ 21781     00B6  28BE               	goto	to_many_zero	;否则 → 多个零
+ 21782     00B7                     no_zero:
+ 21783                           
+ 21784                           ;--- 无按键：TRISC/WPUC 逻辑右移切到下一列，i-1 ---
+ 21785                           ; i != 0 → 继续扫下一列(scan_start)
+ 21786                           ; i == 0 → 4 列扫完无按键 → 回到 cal_0_num
+ 21787     00B7  0020               	banksel	19
+ 21788     00B8  3693               	lsrf	19,f	;TRISC 逻辑右移(扫描列切换)
+ 21789     00B9  003E               	banksel	3919
+ 21790     00BA  36CF               	lsrf	3919,f	;WPUC 逻辑右移(跟上 TRISC)
+ 21791     00BB  0BFB               	decfsz	i,f	;i = i-1；结果为 0 时跳过下一条
+ 21792     00BC  289E               	goto	cal_0_num	;i != 0 → 继续扫描下一列
+ 21793     00BD  0008               	return	;i == 0 → 扫完所有列，返回
+ 21794     00BE                     to_many_zero:
+ 21795                           
+ 21796                           ;--- 多个按键同时按下 → 4 位显示 "Err"(末位熄灭) 并返回 ---
+ 21797     00BE  300E               	movlw	14	;索引 14 = 'E'
+ 21798     00BF  00F1               	movwf	p1
+ 21799     00C0  301B               	movlw	27	;索引 27 = 'R'(表内无小写 r，用 R 近似)
+ 21800     00C1  00F2               	movwf	p2
+ 21801     00C2  301B               	movlw	27	;索引 27 = 'R'
+ 21802     00C3  00F3               	movwf	p3
+ 21803     00C4  3024               	movlw	36	;索引 36 = 全灭(第 4 位熄灭)
+ 21804     00C5  00F4               	movwf	p4
+ 21805     00C6  0008               	return
+ 21806     00C7                     one_zero:
+ 21807                           
+ 21808                           ;--- 单键按下：保存本次 PORTC 数据，标记已找到按键 ---
+ 21809     00C7  0020               	banksel	14
+ 21810     00C8  080E               	movf	14,w	;重新读 PORTC(此时 charcase 已被覆盖为 nz)
+ 21811     00C9  390F               	andlw	15
+ 21812     00CA  00FC               	movwf	key_data	;保存按下时的 PORTC 低 4 位
+ 21813     00CB  01FD               	clrf	key_cnt	;按下次数清零(从按下时刻开始计数)
+ 21814     00CC  147A               	bsf	FLAG,0	;置位 FLAG → 之后每次进 button_scan 直接进 State_machine
+ 21815     00CD  0008               	return
+ 21816                           
+ 21817                           ;--- 按键状态机常量：key_state 的 01 组合区分状态 ---
+ 21818                           ; bit0-2 = 状态(0~5, 共6个节点), bit7=1 → 消抖为二次(双击)模式
+ 21819                           ; KEY_DEBOUNCE 被复用两次(首次→DOWN, 二次→DOUBLE_ACTIVE)
+ 21820     0000                     KEY_IDLE        equ	0
+ 21821     0001                     KEY_DEBOUNCE    equ	1
+ 21822     0002                     KEY_DOWN        equ	2
+ 21823     0003                     KEY_LONG_ACTIVE equ	3
+ 21824     0004                     KEY_WAIT_DOUBLE equ	4
+ 21825     0005                     KEY_DOUBLE_ACTIVE equ	5
+ 21826     00CE                     State_machine:	
+ 21827                           ;--- 按键状态机：单击/双击/长按 ---
+ 21828                           ; 入口：button_scan 扫描到单个按键后置 FLAG，之后每次进 button_scan 直接跳这�
       +                          �
- 21816                           ; 采样：PORTC 低4位任一为 0 → 按键仍按下(具体按键见 key_data)
- 21817                           ; 计数：key_cnt 为通用计数(进入各状态清零)
- 21818                           ; 事件：WAIT_DOUBLE 第129次超时→单击；进 LONG_ACTIVE→长按；进 DOUBLE_ACTIVE→双
+ 21829                           ; 采样：PORTC 低4位任一为 0 → 按键仍按下(具体按键见 key_data)
+ 21830                           ; 计数：key_cnt 为通用计数(进入各状态清零)
+ 21831                           ; 事件：WAIT_DOUBLE 第129次超时→单击；进 LONG_ACTIVE→长按；进 DOUBLE_ACTIVE→双
       +                          击
- 21819                           ; 结束：回到 KEY_IDLE 且无按下 → 清 FLAG → 从头开始扫描
- 21820                           
- 21821     00C7  0020               	banksel	14
- 21822     00C8  080E               	movf	14,w
- 21823     00C9  390F               	andlw	15
- 21824     00CA  3A0F               	xorlw	15	;全1(无按下)→W=0,Z=1
- 21825     00CB  00F0               	movwf	charcase	;charcase=按下掩码(0=无按下)
- 21826                           
- 21827                           ;按低3位状态分支
- 21828     00CC  087E               	movf	key_state,w
- 21829     00CD  3907               	andlw	7
- 21830     00CE  000B               	brw
- 21831     00CF  28D5               	goto	st_idle	;0 KEY_IDLE
- 21832     00D0  28DE               	goto	st_debounce	;1 KEY_DEBOUNCE
- 21833     00D1  28F4               	goto	st_down	;2 KEY_DOWN
- 21834     00D2  28FF               	goto	st_long_active	;3 KEY_LONG_ACTIVE
- 21835     00D3  290D               	goto	st_wait_double	;4 KEY_WAIT_DOUBLE
- 21836     00D4  291A               	goto	st_double_active	;5 KEY_DOUBLE_ACTIVE
- 21837     00D5                     st_idle:	
- 21838                           ;--- KEY_IDLE：待机。有按下→首次消抖；无按下→事件结束，清FLAG回扫描 ---
+ 21832                           ; 结束：回到 KEY_IDLE 且无按下 → 清 FLAG → 从头开始扫描
+ 21833                           
+ 21834     00CE  0020               	banksel	14
+ 21835     00CF  080E               	movf	14,w
+ 21836     00D0  390F               	andlw	15
+ 21837     00D1  3A0F               	xorlw	15	;全1(无按下)→W=0,Z=1
+ 21838     00D2  00F0               	movwf	charcase	;charcase=按下掩码(0=无按下)
  21839                           
- 21840     00D5  0870               	movf	charcase,w
- 21841     00D6  1903               	btfsc	3,2	;无按下 → 事件结束
- 21842     00D7  28DC               	goto	idle_no_press
- 21843     00D8  01FD               	clrf	key_cnt	;有按下 → 进消抖
- 21844     00D9  3001               	movlw	1	;首次消抖(bit7=0)
- 21845     00DA  00FE               	movwf	key_state
- 21846     00DB  0008               	return
- 21847     00DC                     idle_no_press:
- 21848     00DC  107A               	bcf	FLAG,0	;回待机 → 从头开始扫描
- 21849     00DD  0008               	return
- 21850     00DE                     st_debounce:	
- 21851                           ;--- KEY_DEBOUNCE(复用)：连续3次按下才有效；<3次回IDLE ---
+ 21840                           ;按低3位状态分支
+ 21841     00D3  087E               	movf	key_state,w
+ 21842     00D4  3907               	andlw	7
+ 21843     00D5  000B               	brw
+ 21844     00D6  28DC               	goto	st_idle	;0 KEY_IDLE
+ 21845     00D7  28E5               	goto	st_debounce	;1 KEY_DEBOUNCE
+ 21846     00D8  28FB               	goto	st_down	;2 KEY_DOWN
+ 21847     00D9  2906               	goto	st_long_active	;3 KEY_LONG_ACTIVE
+ 21848     00DA  2914               	goto	st_wait_double	;4 KEY_WAIT_DOUBLE
+ 21849     00DB  2921               	goto	st_double_active	;5 KEY_DOUBLE_ACTIVE
+ 21850     00DC                     st_idle:	
+ 21851                           ;--- KEY_IDLE：待机。有按下→首次消抖；无按下→事件结束，清FLAG回扫描 ---
  21852                           
- 21853     00DE  0870               	movf	charcase,w
- 21854     00DF  1903               	btfsc	3,2	;松开 → 消抖失败回 IDLE
- 21855     00E0  28F0               	goto	debounce_fail
- 21856     00E1  0AFD               	incf	key_cnt,f
- 21857     00E2  3003               	movlw	3
- 21858     00E3  027D               	subwf	key_cnt,w	;W = 3 - key_cnt
- 21859     00E4  1D03               	btfss	3,2	;未满3次
- 21860     00E5  0008               	return
- 21861                           
- 21862                           ;连续3次按下 → 按 bit7 区分去向
- 21863     00E6  1FFE               	btfss	key_state,7	;bit7=1 → 二次(双击)消抖
- 21864     00E7  28EC               	goto	debounce_to_down
- 21865     00E8  3005               	movlw	5	;二次消抖成功 → 双击激活
- 21866     00E9  00FE               	movwf	key_state
- 21867     00EA  01FD               	clrf	key_cnt
- 21868     00EB  2932               	goto	trigger_double
- 21869     00EC                     debounce_to_down:
- 21870     00EC  3002               	movlw	2	;首次消抖成功 → 按下状态
- 21871     00ED  00FE               	movwf	key_state
- 21872     00EE  01FD               	clrf	key_cnt
- 21873     00EF  0008               	return
- 21874     00F0                     debounce_fail:
- 21875     00F0  3000               	movlw	0
- 21876     00F1  00FE               	movwf	key_state
- 21877     00F2  01FD               	clrf	key_cnt
- 21878     00F3  0008               	return
- 21879     00F4                     st_down:	
- 21880                           ;--- KEY_DOWN：按下保持。连续256次→长按；松开→等待双击 ---
- 21881                           
- 21882     00F4  0870               	movf	charcase,w
- 21883     00F5  1903               	btfsc	3,2	;松开
- 21884     00F6  28FB               	goto	down_release
- 21885     00F7  0AFD               	incf	key_cnt,f
- 21886     00F8  1903               	btfsc	3,2	;key_cnt 255→0(第256次) → 长按
- 21887     00F9  292D               	goto	trigger_long
- 21888     00FA  0008               	return
- 21889     00FB                     down_release:
- 21890     00FB  01FD               	clrf	key_cnt
- 21891     00FC  3004               	movlw	4
- 21892     00FD  00FE               	movwf	key_state
- 21893     00FE  0008               	return
- 21894     00FF                     st_long_active:	
- 21895                           ;--- KEY_LONG_ACTIVE：长按已触发。连续3次松开→回IDLE ---
- 21896                           
- 21897     00FF  0870               	movf	charcase,w
- 21898     0100  1D03               	btfss	3,2	;仍按下 → 重置松开计数
- 21899     0101  290B               	goto	long_still_pressed
- 21900     0102  0AFD               	incf	key_cnt,f
- 21901     0103  3003               	movlw	3
- 21902     0104  027D               	subwf	key_cnt,w
- 21903     0105  1D03               	btfss	3,2
- 21904     0106  0008               	return
- 21905     0107  3000               	movlw	0	;连续3次松开 → 回待机
- 21906     0108  00FE               	movwf	key_state
- 21907     0109  01FD               	clrf	key_cnt
- 21908     010A  0008               	return
- 21909     010B                     long_still_pressed:
- 21910     010B  01FD               	clrf	key_cnt
- 21911     010C  0008               	return
- 21912     010D                     st_wait_double:	
- 21913                           ;--- KEY_WAIT_DOUBLE：等待双击窗口。128次内再按下→二次消抖；第129次未按下�
+ 21853     00DC  0870               	movf	charcase,w
+ 21854     00DD  1903               	btfsc	3,2	;无按下 → 事件结束
+ 21855     00DE  28E3               	goto	idle_no_press
+ 21856     00DF  01FD               	clrf	key_cnt	;有按下 → 进消抖
+ 21857     00E0  3001               	movlw	1	;首次消抖(bit7=0)
+ 21858     00E1  00FE               	movwf	key_state
+ 21859     00E2  0008               	return
+ 21860     00E3                     idle_no_press:
+ 21861     00E3  107A               	bcf	FLAG,0	;回待机 → 从头开始扫描
+ 21862     00E4  0008               	return
+ 21863     00E5                     st_debounce:	
+ 21864                           ;--- KEY_DEBOUNCE(复用)：连续3次按下才有效；<3次回IDLE ---
+ 21865                           
+ 21866     00E5  0870               	movf	charcase,w
+ 21867     00E6  1903               	btfsc	3,2	;松开 → 消抖失败回 IDLE
+ 21868     00E7  28F7               	goto	debounce_fail
+ 21869     00E8  0AFD               	incf	key_cnt,f
+ 21870     00E9  3003               	movlw	3
+ 21871     00EA  027D               	subwf	key_cnt,w	;W = 3 - key_cnt
+ 21872     00EB  1D03               	btfss	3,2	;未满3次
+ 21873     00EC  0008               	return
+ 21874                           
+ 21875                           ;连续3次按下 → 按 bit7 区分去向
+ 21876     00ED  1FFE               	btfss	key_state,7	;bit7=1 → 二次(双击)消抖
+ 21877     00EE  28F3               	goto	debounce_to_down
+ 21878     00EF  3005               	movlw	5	;二次消抖成功 → 双击激活
+ 21879     00F0  00FE               	movwf	key_state
+ 21880     00F1  01FD               	clrf	key_cnt
+ 21881     00F2  2939               	goto	trigger_double
+ 21882     00F3                     debounce_to_down:
+ 21883     00F3  3002               	movlw	2	;首次消抖成功 → 按下状态
+ 21884     00F4  00FE               	movwf	key_state
+ 21885     00F5  01FD               	clrf	key_cnt
+ 21886     00F6  0008               	return
+ 21887     00F7                     debounce_fail:
+ 21888     00F7  3000               	movlw	0
+ 21889     00F8  00FE               	movwf	key_state
+ 21890     00F9  01FD               	clrf	key_cnt
+ 21891     00FA  0008               	return
+ 21892     00FB                     st_down:	
+ 21893                           ;--- KEY_DOWN：按下保持。连续256次→长按；松开→等待双击 ---
+ 21894                           
+ 21895     00FB  0870               	movf	charcase,w
+ 21896     00FC  1903               	btfsc	3,2	;松开
+ 21897     00FD  2902               	goto	down_release
+ 21898     00FE  0AFD               	incf	key_cnt,f
+ 21899     00FF  1903               	btfsc	3,2	;key_cnt 255→0(第256次) → 长按
+ 21900     0100  2934               	goto	trigger_long
+ 21901     0101  0008               	return
+ 21902     0102                     down_release:
+ 21903     0102  01FD               	clrf	key_cnt
+ 21904     0103  3004               	movlw	4
+ 21905     0104  00FE               	movwf	key_state
+ 21906     0105  0008               	return
+ 21907     0106                     st_long_active:	
+ 21908                           ;--- KEY_LONG_ACTIVE：长按已触发。连续3次松开→回IDLE ---
+ 21909                           
+ 21910     0106  0870               	movf	charcase,w
+ 21911     0107  1D03               	btfss	3,2	;仍按下 → 重置松开计数
+ 21912     0108  2912               	goto	long_still_pressed
+ 21913     0109  0AFD               	incf	key_cnt,f
+ 21914     010A  3003               	movlw	3
+ 21915     010B  027D               	subwf	key_cnt,w
+ 21916     010C  1D03               	btfss	3,2
+ 21917     010D  0008               	return
+ 21918     010E  3000               	movlw	0	;连续3次松开 → 回待机
+ 21919     010F  00FE               	movwf	key_state
+ 21920     0110  01FD               	clrf	key_cnt
+ 21921     0111  0008               	return
+ 21922     0112                     long_still_pressed:
+ 21923     0112  01FD               	clrf	key_cnt
+ 21924     0113  0008               	return
+ 21925     0114                     st_wait_double:	
+ 21926                           ;--- KEY_WAIT_DOUBLE：等待双击窗口。128次内再按下→二次消抖；第129次未按下�
       +                          �单击 ---
- 21914                           
- 21915     010D  0870               	movf	charcase,w
- 21916     010E  1D03               	btfss	3,2	;检测到再次按下
- 21917     010F  2916               	goto	wait_double_pressed
- 21918     0110  0AFD               	incf	key_cnt,f	;窗口计数 +1
- 21919     0111  3081               	movlw	129
- 21920     0112  027D               	subwf	key_cnt,w
- 21921     0113  1903               	btfsc	3,2	;第129次仍未按下 → 超时单击
- 21922     0114  2928               	goto	trigger_click
- 21923     0115  0008               	return
- 21924     0116                     wait_double_pressed:
- 21925     0116  01FD               	clrf	key_cnt
- 21926     0117  3081               	movlw	129	;二次消抖(bit7=1)
- 21927     0118  00FE               	movwf	key_state
- 21928     0119  0008               	return
- 21929     011A                     st_double_active:	
- 21930                           ;--- KEY_DOUBLE_ACTIVE：双击已触发。连续3次松开→回IDLE ---
- 21931                           
- 21932     011A  0870               	movf	charcase,w
- 21933     011B  1D03               	btfss	3,2
- 21934     011C  2926               	goto	double_still_pressed
- 21935     011D  0AFD               	incf	key_cnt,f
- 21936     011E  3003               	movlw	3
- 21937     011F  027D               	subwf	key_cnt,w
- 21938     0120  1D03               	btfss	3,2
- 21939     0121  0008               	return
- 21940     0122  3000               	movlw	0	;连续3次松开 → 回待机
- 21941     0123  00FE               	movwf	key_state
- 21942     0124  01FD               	clrf	key_cnt
- 21943     0125  0008               	return
- 21944     0126                     double_still_pressed:
- 21945     0126  01FD               	clrf	key_cnt
- 21946     0127  0008               	return
- 21947     0128                     trigger_click:	
- 21948                           ;--- 单击事件(WAIT_DOUBLE 第129次超时) ---
- 21949                           
- 21950     0128  2135               	call	click_event
- 21951     0129  3000               	movlw	0
- 21952     012A  00FE               	movwf	key_state
- 21953     012B  01FD               	clrf	key_cnt
- 21954     012C  0008               	return
- 21955     012D                     trigger_long:	
- 21956                           ;--- 长按事件(第256次按下) ---
- 21957                           
- 21958     012D  2143               	call	long_event
- 21959     012E  3003               	movlw	3
- 21960     012F  00FE               	movwf	key_state
- 21961     0130  01FD               	clrf	key_cnt
- 21962     0131  0008               	return
- 21963     0132                     trigger_double:	
- 21964                           ;--- 双击事件(二次消抖成功) ---
- 21965                           
- 21966     0132  213C               	call	double_event
- 21967                           
- 21968                           ;key_state 已是 KEY_DOUBLE_ACTIVE
- 21969     0133  01FD               	clrf	key_cnt
- 21970     0134  0008               	return
- 21971     0135                     click_event:	
- 21972                           ;--- 单击事件处理：1、2位=按键号, 3、4位=DJ(单击) ---
- 21973                           
- 21974     0135  214A               	call	key_number	;W = 按键号(1~10)
- 21975     0136  2169               	call	disp_key_num	;p1=十位(0全灭), p2=个位
- 21976     0137  300D               	movlw	13	;'D'
- 21977     0138  00F3               	movwf	p3
- 21978     0139  3013               	movlw	19	;'J'
- 21979     013A  00F4               	movwf	p4
- 21980     013B  0008               	return
- 21981     013C                     double_event:	
- 21982                           ;--- 双击事件处理：1、2位=按键号, 3、4位=SJ(双击) ---
- 21983                           
- 21984     013C  214A               	call	key_number
- 21985     013D  2169               	call	disp_key_num
- 21986     013E  301C               	movlw	28	;'S'
- 21987     013F  00F3               	movwf	p3
- 21988     0140  3013               	movlw	19	;'J'
- 21989     0141  00F4               	movwf	p4
- 21990     0142  0008               	return
- 21991     0143                     long_event:	
- 21992                           ;--- 长按事件处理：1、2位=按键号, 3、4位=CA(长按) ---
- 21993                           
- 21994     0143  214A               	call	key_number
- 21995     0144  2169               	call	disp_key_num
- 21996     0145  300C               	movlw	12	;'C'
- 21997     0146  00F3               	movwf	p3
- 21998     0147  300A               	movlw	10	;'A'
- 21999     0148  00F4               	movwf	p4
- 22000     0149  0008               	return
- 22001     014A                     key_number:	
- 22002                           ;--- 计算当前按键号(1~10)：根据 i 和 key_data(按下位=0) ---
- 22003                           ; i=4: C3→10 C2→9 C1→8 C0→7
- 22004                           ; i=3: C2→6 C1→5 C0→4
- 22005                           ; i=2: C1→3 C0→2
- 22006                           ; i=1: C0→1
- 22007                           ; 输入: i(1~4), key_data; 输出: W=按键号
- 22008                           
- 22009     014A  087B               	movf	i,w
- 22010     014B  3EFF               	addlw	-1	;i-1 (0~3)
- 22011     014C  000B               	brw
- 22012     014D  2951               	goto	key_i4
- 22013     014E  295A               	goto	key_i3
- 22014     014F  2961               	goto	key_i2
- 22015     0150  2966               	goto	key_i1
- 22016     0151                     key_i4:
- 22017     0151  1DFC               	btfss	key_data,3
- 22018     0152  340A               	retlw	10
- 22019     0153  1D7C               	btfss	key_data,2
- 22020     0154  3409               	retlw	9
- 22021     0155  1CFC               	btfss	key_data,1
- 22022     0156  3408               	retlw	8
- 22023     0157  1C7C               	btfss	key_data,0
- 22024     0158  3407               	retlw	7
- 22025     0159  3400               	retlw	0	;无匹配(不应发生)
- 22026     015A                     key_i3:
- 22027     015A  1D7C               	btfss	key_data,2
- 22028     015B  3406               	retlw	6
- 22029     015C  1CFC               	btfss	key_data,1
- 22030     015D  3405               	retlw	5
- 22031     015E  1C7C               	btfss	key_data,0
- 22032     015F  3404               	retlw	4
- 22033     0160  3400               	retlw	0
- 22034     0161                     key_i2:
- 22035     0161  1CFC               	btfss	key_data,1
- 22036     0162  3403               	retlw	3
- 22037     0163  1C7C               	btfss	key_data,0
- 22038     0164  3402               	retlw	2
- 22039     0165  3400               	retlw	0
- 22040     0166                     key_i1:
- 22041     0166  1C7C               	btfss	key_data,0
- 22042     0167  3401               	retlw	1
- 22043     0168  3400               	retlw	0
- 22044     0169                     disp_key_num:	
- 22045                           ;--- 显示按键号(1~10)到数码管1、2位 ---
- 22046                           ; 输入: W=按键号; p1=十位(为0时全灭36), p2=个位
- 22047                           
- 22048     0169  00F0               	movwf	charcase	;charcase = 按键号
- 22049     016A  300A               	movlw	10
- 22050     016B  0270               	subwf	charcase,w	;W = 10 - n
- 22051     016C  1903               	btfsc	3,2	;n==10
- 22052     016D  2973               	goto	num_is_10
- 22053     016E  3024               	movlw	36	;n<10 → 十位全灭
- 22054     016F  00F1               	movwf	p1
- 22055     0170  0870               	movf	charcase,w
- 22056     0171  00F2               	movwf	p2	;个位 = n
- 22057     0172  0008               	return
- 22058     0173                     num_is_10:
- 22059     0173  3001               	movlw	1
- 22060     0174  00F1               	movwf	p1	;十位 = 1
- 22061     0175  3000               	movlw	0
- 22062     0176  00F2               	movwf	p2	;个位 = 0
- 22063     0177  0008               	return
- 22064     0178                     disp_portc:	
- 22065                           ;--- 实时显示 PORTC 低 4 位电平(0/1)到 4 位数码管 ---
- 22066                           ; p1=((PORTC) and 07Fh), 0, p2=((PORTC) and 07Fh), 1, p3=((PORTC) and 07Fh), 2, p4=((PORTC) and 07Fh
+ 21927                           
+ 21928     0114  0870               	movf	charcase,w
+ 21929     0115  1D03               	btfss	3,2	;检测到再次按下
+ 21930     0116  291D               	goto	wait_double_pressed
+ 21931     0117  0AFD               	incf	key_cnt,f	;窗口计数 +1
+ 21932     0118  3081               	movlw	129
+ 21933     0119  027D               	subwf	key_cnt,w
+ 21934     011A  1903               	btfsc	3,2	;第129次仍未按下 → 超时单击
+ 21935     011B  292F               	goto	trigger_click
+ 21936     011C  0008               	return
+ 21937     011D                     wait_double_pressed:
+ 21938     011D  01FD               	clrf	key_cnt
+ 21939     011E  3081               	movlw	129	;二次消抖(bit7=1)
+ 21940     011F  00FE               	movwf	key_state
+ 21941     0120  0008               	return
+ 21942     0121                     st_double_active:	
+ 21943                           ;--- KEY_DOUBLE_ACTIVE：双击已触发。连续3次松开→回IDLE ---
+ 21944                           
+ 21945     0121  0870               	movf	charcase,w
+ 21946     0122  1D03               	btfss	3,2
+ 21947     0123  292D               	goto	double_still_pressed
+ 21948     0124  0AFD               	incf	key_cnt,f
+ 21949     0125  3003               	movlw	3
+ 21950     0126  027D               	subwf	key_cnt,w
+ 21951     0127  1D03               	btfss	3,2
+ 21952     0128  0008               	return
+ 21953     0129  3000               	movlw	0	;连续3次松开 → 回待机
+ 21954     012A  00FE               	movwf	key_state
+ 21955     012B  01FD               	clrf	key_cnt
+ 21956     012C  0008               	return
+ 21957     012D                     double_still_pressed:
+ 21958     012D  01FD               	clrf	key_cnt
+ 21959     012E  0008               	return
+ 21960     012F                     trigger_click:	
+ 21961                           ;--- 单击事件(WAIT_DOUBLE 第129次超时) ---
+ 21962                           
+ 21963     012F  213C               	call	click_event
+ 21964     0130  3000               	movlw	0
+ 21965     0131  00FE               	movwf	key_state
+ 21966     0132  01FD               	clrf	key_cnt
+ 21967     0133  0008               	return
+ 21968     0134                     trigger_long:	
+ 21969                           ;--- 长按事件(第256次按下) ---
+ 21970                           
+ 21971     0134  214A               	call	long_event
+ 21972     0135  3003               	movlw	3
+ 21973     0136  00FE               	movwf	key_state
+ 21974     0137  01FD               	clrf	key_cnt
+ 21975     0138  0008               	return
+ 21976     0139                     trigger_double:	
+ 21977                           ;--- 双击事件(二次消抖成功) ---
+ 21978                           
+ 21979     0139  2143               	call	double_event
+ 21980                           
+ 21981                           ;key_state 已是 KEY_DOUBLE_ACTIVE
+ 21982     013A  01FD               	clrf	key_cnt
+ 21983     013B  0008               	return
+ 21984     013C                     click_event:	
+ 21985                           ;--- 单击事件处理：1、2位=按键号, 3、4位=DJ(单击) ---
+ 21986                           
+ 21987     013C  2151               	call	key_number	;W = 按键号(1~10)
+ 21988     013D  2170               	call	disp_key_num	;p1=十位(0全灭), p2=个位
+ 21989     013E  300D               	movlw	13	;'D'
+ 21990     013F  00F3               	movwf	p3
+ 21991     0140  3013               	movlw	19	;'J'
+ 21992     0141  00F4               	movwf	p4
+ 21993     0142  0008               	return
+ 21994     0143                     double_event:	
+ 21995                           ;--- 双击事件处理：1、2位=按键号, 3、4位=SJ(双击) ---
+ 21996                           
+ 21997     0143  2151               	call	key_number
+ 21998     0144  2170               	call	disp_key_num
+ 21999     0145  301C               	movlw	28	;'S'
+ 22000     0146  00F3               	movwf	p3
+ 22001     0147  3013               	movlw	19	;'J'
+ 22002     0148  00F4               	movwf	p4
+ 22003     0149  0008               	return
+ 22004     014A                     long_event:	
+ 22005                           ;--- 长按事件处理：1、2位=按键号, 3、4位=CA(长按) ---
+ 22006                           
+ 22007     014A  2151               	call	key_number
+ 22008     014B  2170               	call	disp_key_num
+ 22009     014C  300C               	movlw	12	;'C'
+ 22010     014D  00F3               	movwf	p3
+ 22011     014E  300A               	movlw	10	;'A'
+ 22012     014F  00F4               	movwf	p4
+ 22013     0150  0008               	return
+ 22014     0151                     key_number:	
+ 22015                           ;--- 计算当前按键号(1~10)：根据 i 和 key_data(按下位=0) ---
+ 22016                           ; i=4: C3→10 C2→9 C1→8 C0→7
+ 22017                           ; i=3: C2→6 C1→5 C0→4
+ 22018                           ; i=2: C1→3 C0→2
+ 22019                           ; i=1: C0→1
+ 22020                           ; 输入: i(1~4), key_data; 输出: W=按键号
+ 22021                           
+ 22022     0151  087B               	movf	i,w
+ 22023     0152  3EFF               	addlw	-1	;i-1 (0~3)
+ 22024     0153  000B               	brw
+ 22025     0154  2958               	goto	key_i4
+ 22026     0155  2961               	goto	key_i3
+ 22027     0156  2968               	goto	key_i2
+ 22028     0157  296D               	goto	key_i1
+ 22029     0158                     key_i4:
+ 22030     0158  1DFC               	btfss	key_data,3
+ 22031     0159  340A               	retlw	10
+ 22032     015A  1D7C               	btfss	key_data,2
+ 22033     015B  3409               	retlw	9
+ 22034     015C  1CFC               	btfss	key_data,1
+ 22035     015D  3408               	retlw	8
+ 22036     015E  1C7C               	btfss	key_data,0
+ 22037     015F  3407               	retlw	7
+ 22038     0160  3400               	retlw	0	;无匹配(不应发生)
+ 22039     0161                     key_i3:
+ 22040     0161  1D7C               	btfss	key_data,2
+ 22041     0162  3406               	retlw	6
+ 22042     0163  1CFC               	btfss	key_data,1
+ 22043     0164  3405               	retlw	5
+ 22044     0165  1C7C               	btfss	key_data,0
+ 22045     0166  3404               	retlw	4
+ 22046     0167  3400               	retlw	0
+ 22047     0168                     key_i2:
+ 22048     0168  1CFC               	btfss	key_data,1
+ 22049     0169  3403               	retlw	3
+ 22050     016A  1C7C               	btfss	key_data,0
+ 22051     016B  3402               	retlw	2
+ 22052     016C  3400               	retlw	0
+ 22053     016D                     key_i1:
+ 22054     016D  1C7C               	btfss	key_data,0
+ 22055     016E  3401               	retlw	1
+ 22056     016F  3400               	retlw	0
+ 22057     0170                     disp_key_num:	
+ 22058                           ;--- 显示按键号(1~10)到数码管1、2位 ---
+ 22059                           ; 输入: W=按键号; p1=十位(为0时全灭36), p2=个位
+ 22060                           
+ 22061     0170  00F0               	movwf	charcase	;charcase = 按键号
+ 22062     0171  300A               	movlw	10
+ 22063     0172  0270               	subwf	charcase,w	;W = 10 - n
+ 22064     0173  1903               	btfsc	3,2	;n==10
+ 22065     0174  297A               	goto	num_is_10
+ 22066     0175  3024               	movlw	36	;n<10 → 十位全灭
+ 22067     0176  00F1               	movwf	p1
+ 22068     0177  0870               	movf	charcase,w
+ 22069     0178  00F2               	movwf	p2	;个位 = n
+ 22070     0179  0008               	return
+ 22071     017A                     num_is_10:
+ 22072     017A  3001               	movlw	1
+ 22073     017B  00F1               	movwf	p1	;十位 = 1
+ 22074     017C  3000               	movlw	0
+ 22075     017D  00F2               	movwf	p2	;个位 = 0
+ 22076     017E  0008               	return
+ 22077     017F                     disp_portc:	
+ 22078                           ;--- 实时显示 PORTC 低 4 位电平(0/1)到 4 位数码管 ---
+ 22079                           ; p1=((PORTC) and 07Fh), 0, p2=((PORTC) and 07Fh), 1, p3=((PORTC) and 07Fh), 2, p4=((PORTC) and 07Fh
       +                          ), 3
- 22067                           ; PORTC 低 4 位须为上拉输入(TRISC=0x0F, WPUC=0x0F)
- 22068                           
- 22069     0178  0020               	banksel	14
- 22070     0179  080E               	movf	14,w	;读 PORTC
- 22071     017A  390F               	andlw	15	;只留低 4 位
- 22072     017B  00F0               	movwf	charcase	;暂存
- 22073                           
- 22074                           ;((PORTC) and 07Fh), 0 → p1
- 22075     017C  3000               	movlw	0
- 22076     017D  1870               	btfsc	charcase,0
- 22077     017E  3001               	movlw	1
- 22078     017F  00F1               	movwf	p1
- 22079                           
- 22080                           ;((PORTC) and 07Fh), 1 → p2
- 22081     0180  3000               	movlw	0
- 22082     0181  18F0               	btfsc	charcase,1
- 22083     0182  3001               	movlw	1
- 22084     0183  00F2               	movwf	p2
- 22085                           
- 22086                           ;((PORTC) and 07Fh), 2 → p3
- 22087     0184  3000               	movlw	0
- 22088     0185  1970               	btfsc	charcase,2
- 22089     0186  3001               	movlw	1
- 22090     0187  00F3               	movwf	p3
- 22091                           
- 22092                           ;((PORTC) and 07Fh), 3 → p4
- 22093     0188  3000               	movlw	0
- 22094     0189  19F0               	btfsc	charcase,3
- 22095     018A  3001               	movlw	1
- 22096     018B  00F4               	movwf	p4
- 22097     018C  0008               	return
- 22098     018D                     seg_table:	
- 22099 ;;--- 7段码字形表：值 0~36 → 段码(共阴数码管) ---
- 22100 ;; 输入：W = 值(0~9 数字, 10~35 字母 A~Z, 36=全灭/熄灭)；输出：W = 对应段码
- 22101                           
- 22102     018D  000B               	brw
- 22103     018E  343F               	retlw	63	; 0
- 22104     018F  3406               	retlw	6	; 1
- 22105     0190  345B               	retlw	91	; 2
- 22106     0191  344F               	retlw	79	; 3
- 22107     0192  3466               	retlw	102	; 4
- 22108     0193  346D               	retlw	109	; 5
- 22109     0194  347D               	retlw	125	; 6
- 22110     0195  3407               	retlw	7	; 7
- 22111     0196  347F               	retlw	127	; 8
- 22112     0197  346F               	retlw	111	; 9
- 22113     0198  3477               	retlw	119	; A
- 22114     0199  347C               	retlw	124	; b
- 22115     019A  3439               	retlw	57	; C
- 22116     019B  345E               	retlw	94	; d
- 22117     019C  3479               	retlw	121	; E
- 22118     019D  3471               	retlw	113	; F
- 22119     019E  343D               	retlw	61	; G
- 22120     019F  3476               	retlw	118	; H
- 22121     01A0  3406               	retlw	6	; I(≈1)
- 22122     01A1  341E               	retlw	30	; J
- 22123     01A2  3475               	retlw	117	; K(近似)
- 22124     01A3  3438               	retlw	56	; L
- 22125     01A4  3437               	retlw	55	; M(近似)
- 22126     01A5  3457               	retlw	87	; N(近似)
- 22127     01A6  343F               	retlw	63	; O(≈0)
- 22128     01A7  3473               	retlw	115	; P
- 22129     01A8  3467               	retlw	103	; Q(近似)
- 22130     01A9  3471               	retlw	113	; R(≈F)
- 22131     01AA  346D               	retlw	109	; S(≈5)
- 22132     01AB  3478               	retlw	120	; T
- 22133     01AC  343E               	retlw	62	; U
- 22134     01AD  343E               	retlw	62	; V(≈U)
- 22135     01AE  346B               	retlw	107	; W(近似)
- 22136     01AF  3476               	retlw	118	; X(≈H)
- 22137     01B0  346E               	retlw	110	; Y(近似)
- 22138     01B1  345B               	retlw	91	; Z(≈2)
- 22139     01B2  3400               	retlw	0	; 36 空白/全灭(熄灭一位)
- 22140     01B3  0008               	return
+ 22080                           ; PORTC 低 4 位须为上拉输入(TRISC=0x0F, WPUC=0x0F)
+ 22081                           
+ 22082     017F  0020               	banksel	14
+ 22083     0180  080E               	movf	14,w	;读 PORTC
+ 22084     0181  390F               	andlw	15	;只留低 4 位
+ 22085     0182  00F0               	movwf	charcase	;暂存
+ 22086                           
+ 22087                           ;((PORTC) and 07Fh), 0 → p1
+ 22088     0183  3000               	movlw	0
+ 22089     0184  1870               	btfsc	charcase,0
+ 22090     0185  3001               	movlw	1
+ 22091     0186  00F1               	movwf	p1
+ 22092                           
+ 22093                           ;((PORTC) and 07Fh), 1 → p2
+ 22094     0187  3000               	movlw	0
+ 22095     0188  18F0               	btfsc	charcase,1
+ 22096     0189  3001               	movlw	1
+ 22097     018A  00F2               	movwf	p2
+ 22098                           
+ 22099                           ;((PORTC) and 07Fh), 2 → p3
+ 22100     018B  3000               	movlw	0
+ 22101     018C  1970               	btfsc	charcase,2
+ 22102     018D  3001               	movlw	1
+ 22103     018E  00F3               	movwf	p3
+ 22104                           
+ 22105                           ;((PORTC) and 07Fh), 3 → p4
+ 22106     018F  3000               	movlw	0
+ 22107     0190  19F0               	btfsc	charcase,3
+ 22108     0191  3001               	movlw	1
+ 22109     0192  00F4               	movwf	p4
+ 22110     0193  0008               	return
+ 22111     0194                     seg_table:	
+ 22112 ;;--- 7段码字形表：值 0~36 → 段码(共阴数码管) ---
+ 22113 ;; 输入：W = 值(0~9 数字, 10~35 字母 A~Z, 36=全灭/熄灭)；输出：W = 对应段码
+ 22114                           
+ 22115     0194  000B               	brw
+ 22116     0195  343F               	retlw	63	; 0
+ 22117     0196  3406               	retlw	6	; 1
+ 22118     0197  345B               	retlw	91	; 2
+ 22119     0198  344F               	retlw	79	; 3
+ 22120     0199  3466               	retlw	102	; 4
+ 22121     019A  346D               	retlw	109	; 5
+ 22122     019B  347D               	retlw	125	; 6
+ 22123     019C  3407               	retlw	7	; 7
+ 22124     019D  347F               	retlw	127	; 8
+ 22125     019E  346F               	retlw	111	; 9
+ 22126     019F  3477               	retlw	119	; A
+ 22127     01A0  347C               	retlw	124	; b
+ 22128     01A1  3439               	retlw	57	; C
+ 22129     01A2  345E               	retlw	94	; d
+ 22130     01A3  3479               	retlw	121	; E
+ 22131     01A4  3471               	retlw	113	; F
+ 22132     01A5  343D               	retlw	61	; G
+ 22133     01A6  3476               	retlw	118	; H
+ 22134     01A7  3406               	retlw	6	; I(≈1)
+ 22135     01A8  341E               	retlw	30	; J
+ 22136     01A9  3475               	retlw	117	; K(近似)
+ 22137     01AA  3438               	retlw	56	; L
+ 22138     01AB  3437               	retlw	55	; M(近似)
+ 22139     01AC  3457               	retlw	87	; N(近似)
+ 22140     01AD  343F               	retlw	63	; O(≈0)
+ 22141     01AE  3473               	retlw	115	; P
+ 22142     01AF  3467               	retlw	103	; Q(近似)
+ 22143     01B0  3471               	retlw	113	; R(≈F)
+ 22144     01B1  346D               	retlw	109	; S(≈5)
+ 22145     01B2  3478               	retlw	120	; T
+ 22146     01B3  343E               	retlw	62	; U
+ 22147     01B4  343E               	retlw	62	; V(≈U)
+ 22148     01B5  346B               	retlw	107	; W(近似)
+ 22149     01B6  3476               	retlw	118	; X(≈H)
+ 22150     01B7  346E               	retlw	110	; Y(近似)
+ 22151     01B8  345B               	retlw	91	; Z(≈2)
+ 22152     01B9  3400               	retlw	0	; 36 空白/全灭(熄灭一位)
+ 22153     01BA  0008               	return
 
 
 Microchip Technology PIC Macro Assembler V4.00 build 20260614213421 
-Symbol Table                                                                                               Mon Aug 24 22:16:23 2026
+Symbol Table                                                                                               Mon Aug 24 22:34:22 2026
 
                                i 007B                     STATUS_Z_POSN 0002                                p1 0071  
                               p2 0072                                p3 0073                                p4 0074  
-                            FLAG 007A                     State_machine 00C7                              LATA 0016  
+                            FLAG 007A                     State_machine 00CE                              LATA 0016  
                             LATB 0017                              LATC 0018                              FOSC F4240  
                             PIE0 0716                              PIR0 070C                              WPUC 0F4F  
-                INTCON_PEIE_POSN 0006                      disp_key_num 0169                     idle_no_press 00DC  
+                INTCON_PEIE_POSN 0006                      disp_key_num 0170                     idle_no_press 00E3  
                            TMR0H 001D                             TMR0L 001C                             PORTC 000E  
                            TRISA 0011                             TRISB 0012                             TRISC 0013  
                            _main 0041                            ANSELA 0F38                            ANSELB 0F43  
                           ANSELC 0F4E                            T0CON0 001E                            T0CON1 001F  
                           INTCON 000B                            INTPPS 0E90                            OSCFRQ 0893  
-                          STATUS 0003                      double_event 013C                            key_i1 0166  
-                          key_i2 0161                            key_i3 015A                            key_i4 0151  
-                    KEY_DEBOUNCE 0001                      down_release 00FB                           TMR0_OP 000A  
-                         cur_bit 0078                           key_cnt 007D                           no_zero 00B0  
-                         st_idle 00D5                           st_down 00F4                     trigger_click 0128  
-                  st_long_active 00FF                          HFINTOSC 3D0900                          KEY_IDLE 0000  
-                        KEY_DOWN 0002                          TMR0_CLK 3D090                          TMR0_OVF 00C8  
-                      TMR0_TICKS 04E2                  PIR0_TMR0IF_POSN 0005                    PIE0_INTE_POSN 0000  
-                  st_wait_double 010D                      select_place 0075              double_still_pressed 0126  
-                    tick_checked 0088                      tick_handler 008A                      tick_divider 007F  
-                        charcase 0070                          key_data 007C                          one_zero 00C0  
-                     click_event 0135                       DISP_DIGITS 0004                          prev_bit 0079  
-                  trigger_double 0132                          sys_tick 0076                   KEY_LONG_ACTIVE 0003  
-                    to_many_zero 00B7                 KEY_DOUBLE_ACTIVE 0005              start_initialization 0000  
-                 KEY_WAIT_DOUBLE 0004                  PIE0_TMR0IE_POSN 0005                       button_scan 0092  
-                    trigger_long 012D               wait_double_pressed 0116                       TMR0_RELOAD FB1E  
-                   debounce_fail 00F0                        handle_int 0090                       st_debounce 00DE  
-                      disp_portc 0178                  st_double_active 011A                        key_number 014A  
-                  PIR0_INTF_POSN 0000                     TMR0_RELOAD_H 00FB                     TMR0_RELOAD_L 001E  
-                       cal_0_num 009E                        long_event 0143                  debounce_to_down 00EC  
-                       display_1 0029                         display_2 0031                         display_3 0039  
-                       main_loop 007E                         first_two 001F                         key_state 007E  
-              long_still_pressed 010B                         seg_table 018D                         reset_vec 0000  
-                       num_is_10 0173                      DISP_REFRESH 0032                   INTCON_GIE_POSN 0007  
+                          STATUS 0003                      double_event 0143                            key_i1 016D  
+                          key_i2 0168                            key_i3 0161                            key_i4 0158  
+                    KEY_DEBOUNCE 0001                      down_release 0102                           TMR0_OP 000A  
+                         cur_bit 0078                           mask_i1 00A6                           mask_i2 00A8  
+                         mask_i3 00AA                           mask_i4 00AC                           key_cnt 007D  
+                         no_zero 00B7                           st_idle 00DC                           st_down 00FB  
+                   trigger_click 012F                    st_long_active 0106                          HFINTOSC 3D0900  
+                        KEY_IDLE 0000                          KEY_DOWN 0002                          TMR0_CLK 3D090  
+                        TMR0_OVF 00C8                        TMR0_TICKS 04E2                  PIR0_TMR0IF_POSN 0005  
+                  PIE0_INTE_POSN 0000                    st_wait_double 0114                      select_place 0075  
+            double_still_pressed 012D                      tick_checked 0088                      tick_handler 008A  
+                    tick_divider 007F                          charcase 0070                          key_data 007C  
+                        one_zero 00C7                       click_event 013C                       DISP_DIGITS 0004  
+                        prev_bit 0079                    trigger_double 0139                          sys_tick 0076  
+                 KEY_LONG_ACTIVE 0003                      to_many_zero 00BE                 KEY_DOUBLE_ACTIVE 0005  
+            start_initialization 0000                   KEY_WAIT_DOUBLE 0004                  PIE0_TMR0IE_POSN 0005  
+                     button_scan 0092                      trigger_long 0134               wait_double_pressed 011D  
+                     TMR0_RELOAD FB1E                     debounce_fail 00F7                        handle_int 0090  
+                     st_debounce 00E5                        disp_portc 017F                  st_double_active 0121  
+                      key_number 0151                    PIR0_INTF_POSN 0000                     TMR0_RELOAD_H 00FB  
+                   TMR0_RELOAD_L 001E                         cal_0_num 009E                        long_event 014A  
+                debounce_to_down 00F3                         display_1 0029                         display_2 0031  
+                       display_3 0039                         main_loop 007E                         first_two 001F  
+                       mask_done 00AD                         key_state 007E                long_still_pressed 0112  
+                       seg_table 0194                         reset_vec 0000                         num_is_10 017A  
+                    DISP_REFRESH 0032                   INTCON_GIE_POSN 0007  

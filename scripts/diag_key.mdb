@@ -1,0 +1,34 @@
+# 按键响应验证脚本
+set device PIC16F18854
+set osc none
+set simulator "sim"
+set voltage 3.3
+device PIC16F18854
+hwtool sim
+Program "D:/PIC/Project/LED_Interupt/dist/default/production/LED_Interupt.production.hex"
+Stepi 300
+echo === NO KEY: check p1-p4 / FLAG / key_state ===
+print /x PORTC
+print /x 0x71
+print /x 0x72
+print /x 0x73
+print /x 0x74
+print /x 0x7a
+print /x 0x7e
+echo === SIMULATE KEY: set PORTC=0x0e (C0=0) ===
+set PORTC=0x0e
+Stepi 200
+print /x PORTC
+print /x 0x7a
+print /x 0x7e
+echo === RUN MORE (state machine sampling) ===
+Stepi 20000
+print /x PORTC
+print /x 0x71
+print /x 0x72
+print /x 0x73
+print /x 0x74
+print /x 0x7a
+print /x 0x7e
+print /x LATA
+quit

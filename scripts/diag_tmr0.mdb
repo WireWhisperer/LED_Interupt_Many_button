@@ -1,0 +1,29 @@
+# 诊断脚本：验证 T0CON1 配置、TMR0 计数、中断触发
+set device PIC16F18854
+set osc none
+set simulator "sim"
+set voltage 3.3
+device PIC16F18854
+hwtool sim
+Program "D:/PIC/Project/LED_Interupt/dist/default/production/LED_Interupt.production.hex"
+echo === AFTER INIT (step 300) ===
+Stepi 300
+print /x T0CON0
+print /x T0CON1
+print /x INTCON
+echo === STEP 2000 more ===
+Stepi 2000
+print /x T0CON0
+print /x T0CON1
+print /x PIR0
+print /x TMR0H
+print /x TMR0L
+print /x LATA
+echo === STEP 10000 more ===
+Stepi 10000
+print /x PIR0
+print /x TMR0H
+print /x TMR0L
+print /x LATA
+print /x PORTC
+quit

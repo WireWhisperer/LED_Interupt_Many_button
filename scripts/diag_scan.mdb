@@ -1,0 +1,19 @@
+set device PIC16F18854
+set osc none
+set simulator "sim"
+set voltage 3.3
+device PIC16F18854
+hwtool sim
+Program "D:/PIC/Project/LED_Interupt/dist/default/production/LED_Interupt.production.hex"
+Stepi 300
+echo === TRISC after init ===
+print /x TRISC
+echo === break at 0x00A6 (统计逻辑 xorwf) 是否可达 ===
+break 0x00A6
+Stepi 2000
+print /x TRISC
+Stepi 20000
+print /x TRISC
+echo === check if 0x00A6 was hit (stat hits) ===
+print /x PC
+quit

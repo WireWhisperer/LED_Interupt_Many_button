@@ -1,0 +1,26 @@
+set device PIC16F18854
+set osc none
+set simulator "sim"
+set voltage 3.3
+device PIC16F18854
+hwtool sim
+Program "D:/PIC/Project/LED_Interupt/dist/default/production/LED_Interupt.production.hex"
+Stepi 100
+print /x PORTC
+echo === try set RC0 low ===
+set RC0 low
+Stepi 10
+print /x PORTC
+echo === try set RC0=low ===
+set RC0=low
+Stepi 10
+print /x PORTC
+echo === try set pin RC0 low ===
+set pin RC0 low
+Stepi 10
+print /x PORTC
+echo === try set PORTC 0x0e again ===
+set PORTC 0x0e
+Stepi 10
+print /x PORTC
+quit
