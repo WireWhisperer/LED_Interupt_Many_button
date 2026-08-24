@@ -1,7 +1,7 @@
 
 
 Microchip MPLAB XC8 Assembler V4.00 build 20260614213421 
-                                                                                                           Mon Aug 24 22:47:39 2026
+                                                                                                           Mon Aug 24 22:57:06 2026
 
 
      1                           	processor	16F18854
@@ -22057,10 +22057,10 @@ Microchip MPLAB XC8 Assembler V4.00 build 20260614213421
  22048     0161  087B               	movf	i,w
  22049     0162  3EFF               	addlw	-1	;i-1 (0~3)
  22050     0163  000B               	brw
- 22051     0164  2968               	goto	key_i4
- 22052     0165  2971               	goto	key_i3
- 22053     0166  2978               	goto	key_i2
- 22054     0167  297D               	goto	key_i1
+ 22051     0164  297D               	goto	key_i1	;i=1
+ 22052     0165  2978               	goto	key_i2	;i=2
+ 22053     0166  2971               	goto	key_i3	;i=3
+ 22054     0167  2968               	goto	key_i4	;i=4
  22055     0168                     key_i4:
  22056     0168  1DFC               	btfss	key_data,3
  22057     0169  340A               	retlw	10
@@ -22190,7 +22190,7 @@ Microchip MPLAB XC8 Assembler V4.00 build 20260614213421
 
 
 Microchip Technology PIC Macro Assembler V4.00 build 20260614213421 
-Symbol Table                                                                                               Mon Aug 24 22:47:39 2026
+Symbol Table                                                                                               Mon Aug 24 22:57:06 2026
 
                                i 007B                     STATUS_Z_POSN 0002                                p1 0071  
                               p2 0072                                p3 0073                                p4 0074  

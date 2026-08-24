@@ -23872,10 +23872,10 @@ key_number:
     movf i, W
     addlw -1 ;i-1 (0~3)
     BRW
-    goto key_i4
-    goto key_i3
-    goto key_i2
-    goto key_i1
+    goto key_i1 ;i=1
+    goto key_i2 ;i=2
+    goto key_i3 ;i=3
+    goto key_i4 ;i=4
 key_i4:
     btfss key_data, 3
     retlw 10
