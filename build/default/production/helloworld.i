@@ -23663,7 +23663,8 @@ KEY_DOUBLE_ACTIVE EQU 5
 
     ;--- 按键状态机：单击/双击/长按 ---
     ; 入口：button_scan 判断 key_state 非空闲(KEY_IDLE)时直接跳这里
-    ; 采样：PORTC 低4位任一为 0 → 按键仍按下(具体按键见 key_data)
+    ; 采样：当前有效位与 key_data 完全相同(同一键仍按下) → 视为按下, cnt+1
+    ; 否则 → 视为松开/换键
     ; 计数：key_cnt 为通用计数(进入各状态清零)
     ; 事件：WAIT_DOUBLE 第129次超时→单击；进 LONG_ACTIVE→长按；进 DOUBLE_ACTIVE→双击
     ; 结束：回到 KEY_IDLE → 从头开始扫描
@@ -23672,15 +23673,24 @@ KEY_DOUBLE_ACTIVE EQU 5
     movf PORTC, W
     andlw 0x0F
     movwf charcase ;charcase = v(PORTC 低4位)
-    ;按当前 i 只保留扫描层有效位(低 i 位), 忽略被 TRISC 右移成输出的高位
-    ; 有效位全1(无按下)→差值为0,Z=1; 有0(按下)→差值非0,Z=0
+    ;--- 与 key_data 比较：当前有效位 == 按下时有效位(同一键仍按下)才视为"按下" ---
+    ; 结果写入 charcase：相同→非0(各状态 cnt+1), 不同→0(视为松开/换键)
     call key_mask ;W = mask
     movwf cur_bit ;cur_bit = mask
     movf charcase, W
-    andwf cur_bit, W ;W = v & mask (有效位)
-    subwf cur_bit, W ;W = mask - (v&mask)
-    movwf charcase ;charcase = 差值(各状态用它判断按下/松开)
-
+    andwf cur_bit, W ;W = v & mask (当前有效位)
+    movwf charcase ;charcase = 当前有效位
+    movf key_data, W
+    andwf cur_bit, W ;W = key_data & mask (按下时有效位)
+    subwf charcase, W ;W = 当前 - key_data；Z=1 → 完全相同
+    btfsc STATUS, STATUS_Z_POSN
+    goto key_same
+    clrf charcase ;不同 → charcase=0(各状态按"松开"处理, 不 cnt+1)
+    goto key_cmp_done
+key_same:
+    movf cur_bit, W ;相同 → charcase=非0(mask)(各状态按"按下"处理, cnt+1)
+    movwf charcase
+key_cmp_done:
     ;按低3位状态分支
     movf key_state, W
     andlw 0x07
