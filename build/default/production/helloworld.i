@@ -23293,7 +23293,6 @@ start_initialization:
     sys_tick: ds 2h ;全局可看的系统时钟(16 位: sys_tick 低字节, sys_tick+1 高字节)
     cur_bit: ds 1h ;sys_tick 第8位当前值(上升沿检测暂存)
     prev_bit: ds 1h ;sys_tick 第8位上一次的值(0→1 上升沿检测)
-    FLAG: ds 1h
     i: ds 1h
     key_data: ds 1h ;保存按下时 PORTC 低 4 位数据(供状态机比较)
     key_cnt: ds 1h ;按键状态机通用计数(进入各状态清零)
@@ -23493,7 +23492,6 @@ _main:
     CLRF prev_bit
     CLRF sys_tick
     CLRF sys_tick+1
-    CLRF FLAG
     CLRF key_state ;状态机从 KEY_IDLE 开始
     CLRF key_cnt
 
@@ -23543,9 +23541,13 @@ handle_int:
     return
 
 button_scan:
-    BTFSC FLAG, 0 ;有没有找到按键(FLAG bit0)
-    goto State_machine
+    movf key_state, W
+    btfsc STATUS, STATUS_Z_POSN ;key_state==KEY_IDLE(0) → 重新扫描矩阵
+    goto scan_matrix
+    goto State_machine ;非空闲 → 直接进状态机
 
+    ;--- 矩阵扫描(仅空闲时进入) ---
+    scan_matrix:
     movlw 4
     movwf i
 
@@ -23639,13 +23641,14 @@ scan_next:
     return
 
     one_zero:
-    ;--- 单键按下：保存本次 PORTC 数据，标记已找到按键 ---
+    ;--- 单键按下：保存本次 PORTC 数据，直接进入消抖状态 ---
     BANKSEL PORTC
     movf PORTC, W ;重新读 PORTC(此时 charcase 已被覆盖为 nz)
     ANDLW 0x0F
     movwf key_data ;保存按下时的 PORTC 低 4 位
     CLRF key_cnt ;按下次数清零(从按下时刻开始计数)
-    bsf FLAG, 0 ;置位 FLAG → 之后每次进 button_scan 直接进 State_machine
+    movlw KEY_DEBOUNCE ;直接进入消抖(替代原 FLAG 标记)
+    movwf key_state
     return
 
     ;--- 按键状态机常量：key_state 的 01 组合区分状态 ---
@@ -23659,11 +23662,11 @@ KEY_WAIT_DOUBLE EQU 4
 KEY_DOUBLE_ACTIVE EQU 5
 
     ;--- 按键状态机：单击/双击/长按 ---
-    ; 入口：button_scan 扫描到单个按键后置 FLAG，之后每次进 button_scan 直接跳这里
+    ; 入口：button_scan 判断 key_state 非空闲(KEY_IDLE)时直接跳这里
     ; 采样：PORTC 低4位任一为 0 → 按键仍按下(具体按键见 key_data)
     ; 计数：key_cnt 为通用计数(进入各状态清零)
     ; 事件：WAIT_DOUBLE 第129次超时→单击；进 LONG_ACTIVE→长按；进 DOUBLE_ACTIVE→双击
-    ; 结束：回到 KEY_IDLE 且无按下 → 清 FLAG → 从头开始扫描
+    ; 结束：回到 KEY_IDLE → 从头开始扫描
     State_machine:
     BANKSEL PORTC
     movf PORTC, W
@@ -23689,17 +23692,8 @@ KEY_DOUBLE_ACTIVE EQU 5
     goto st_wait_double ;4 KEY_WAIT_DOUBLE
     goto st_double_active ;5 KEY_DOUBLE_ACTIVE
 
-    ;--- KEY_IDLE：待机。有按下→首次消抖；无按下→事件结束，清FLAG回扫描 ---
+    ;--- KEY_IDLE：空闲。现由 one_zero 直接转入 KEY_DEBOUNCE，此状态不可达，仅占位 ---
     st_idle:
-    movf charcase, W
-    btfsc STATUS, STATUS_Z_POSN ;无按下 → 事件结束
-    goto idle_no_press
-    CLRF key_cnt ;有按下 → 进消抖
-    movlw KEY_DEBOUNCE ;首次消抖(bit7=0)
-    movwf key_state
-    return
-    idle_no_press:
-    bcf FLAG, 0 ;回待机 → 从头开始扫描
     return
 
     ;--- KEY_DEBOUNCE(复用)：连续3次按下才有效；<3次回IDLE ---
